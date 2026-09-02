@@ -1,18 +1,30 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  --text: #57624f;
+  --text-h: #16241a;
+  --bg: #fdfdfb;
+  --surface: #ffffff;
+  --border: #e2e8de;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+
+  --accent: #16a34a;
+  --accent-h: #15803d;
+  --accent-bg: rgba(22, 163, 74, 0.09);
+  --accent-border: rgba(22, 163, 74, 0.35);
+  --accent-contrast: #ffffff;
+
+  --warm: #f97316;
+  --warm-bg: rgba(249, 115, 22, 0.1);
+
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(20, 30, 20, 0.08) 0 10px 20px -6px, rgba(20, 30, 20, 0.06) 0 4px 8px -2px;
+  --shadow-sm: rgba(20, 30, 20, 0.08) 0 2px 6px -1px;
+
+  --radius: 14px;
+  --radius-sm: 8px;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Poppins', system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -32,17 +44,26 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
+    --text: #a9b6a2;
+    --text-h: #eef5ea;
+    --bg: #10140f;
+    --surface: #161c14;
+    --border: #263023;
     --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
+
+    --accent: #4ade80;
+    --accent-h: #6ee7a5;
+    --accent-bg: rgba(74, 222, 128, 0.14);
+    --accent-border: rgba(74, 222, 128, 0.4);
+    --accent-contrast: #0a1f10;
+
+    --warm: #fb923c;
+    --warm-bg: rgba(251, 146, 60, 0.14);
+
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+      rgba(0, 0, 0, 0.5) 0 10px 20px -6px, rgba(0, 0, 0, 0.3) 0 4px 8px -2px;
+    --shadow-sm: rgba(0, 0, 0, 0.35) 0 2px 6px -1px;
   }
 
   #social .button-icon {
@@ -60,6 +81,7 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: var(--bg);
 }
 
 body {
@@ -69,12 +91,13 @@ body {
 h1,
 h2 {
   font-family: var(--heading);
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-h);
 }
 
 h1 {
   font-size: 56px;
+  line-height: 1.1;
   letter-spacing: -1.68px;
   margin: 32px 0;
   @media (max-width: 1024px) {

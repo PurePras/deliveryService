@@ -1,0 +1,35 @@
+import { createBrowserRouter } from 'react-router-dom';
+import MainLayout from '../layouts/MainLayout';
+import ProtectedRoute from './ProtectedRoute';
+import Home from '../pages/Home';
+import Products from '../pages/Products';
+import ProductDetail from '../pages/ProductDetail';
+import Categories from '../pages/Categories';
+import Cart from '../pages/Cart';
+import Checkout from '../pages/Checkout';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import Account from '../pages/Account';
+import NotFound from '../pages/NotFound';
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <MainLayout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: 'products', element: <Products /> },
+      { path: 'products/:id', element: <ProductDetail /> },
+      { path: 'categories', element: <Categories /> },
+      { path: 'cart', element: <Cart /> },
+      { path: 'checkout', element: <Checkout /> },
+      { path: 'login', element: <Login /> },
+      { path: 'register', element: <Register /> },
+      {
+        element: <ProtectedRoute />,
+        children: [{ path: 'account', element: <Account /> }],
+      },
+      { path: '*', element: <NotFound /> },
+    ],
+  },
+]);
