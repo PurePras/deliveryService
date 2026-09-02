@@ -1,0 +1,112 @@
+.hero {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 72px 24px;
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(480px circle at 15% 15%, var(--accent-bg), transparent 60%),
+    radial-gradient(420px circle at 85% 25%, var(--warm-bg), transparent 60%);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--accent-h);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.hindi {
+  font-family: var(--heading);
+  font-size: 22px;
+  color: var(--text-h);
+}
+
+.tagline {
+  color: var(--text);
+  font-size: 16px;
+  max-width: 420px;
+}
+
+.cta {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-h));
+  color: var(--accent-contrast);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 8px 20px -6px var(--accent-border);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px var(--accent-border);
+}
+
+.section {
+  padding: 40px 24px;
+  text-align: left;
+  border-top: 1px solid var(--border);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+}
+
+.viewAll {
+  color: var(--accent-h);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.viewAll:hover {
+  text-decoration: underline;
+}
+
+.categoryStrip {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 20px;
+}

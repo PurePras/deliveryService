@@ -1,0 +1,138 @@
+.page {
+  flex: 1;
+  padding: 32px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  text-align: left;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.breadcrumb a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: var(--accent-h);
+}
+
+.current {
+  color: var(--text-h);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) 1fr;
+  gap: 40px;
+  align-items: start;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.imageWrap {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(15, 15, 15, 0.75);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.info h1 {
+  margin: 0;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent-h);
+  font-family: var(--heading);
+}
+
+.unit {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.description {
+  color: var(--text);
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+.stock {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.cartAction {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.addBtn {
+  padding: 12px 28px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-h));
+  color: var(--accent-contrast);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px var(--accent-border);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.addBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px var(--accent-border);
+}
+
+.viewCart {
+  color: var(--accent-h);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.viewCart:hover {
+  text-decoration: underline;
+}

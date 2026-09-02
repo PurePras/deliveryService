@@ -1,0 +1,33 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  width: 96px;
+}
+
+.imageWrap {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
+}
+
+.card:hover .imageWrap {
+  transform: translateY(-3px);
+  border-color: var(--accent-border);
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+  text-align: center;
+  line-height: 1.3;
+}
