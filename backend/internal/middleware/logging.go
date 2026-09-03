@@ -42,7 +42,7 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 				"path", r.URL.Path,
 				"status", rec.status,
 				"duration_ms", time.Since(start).Milliseconds(),
-				"remote_addr", r.RemoteAddr,
+				"remote_addr", clientIP(r),
 			)
 		})
 	}

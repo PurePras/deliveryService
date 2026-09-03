@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,10 +14,11 @@ import (
 // IPRateLimiter tracks one token-bucket limiter per client IP. Idle entries are cleaned
 // up periodically so long-running processes don't accumulate an unbounded map.
 //
-// IP is read from r.RemoteAddr, which is correct for this deployment shape (the API is
-// hit directly). Once Phase 13 puts a reverse proxy in front of this, clientIP will need
-// to read X-Forwarded-For instead — trusting that header directly today, before a proxy
-// that sets it exists, would let a client simply spoof its way around the limiter.
+// IP is read from X-Forwarded-For (set by the nginx reverse proxy in front of this
+// service — see nginx/conf.d/app.conf) when present, falling back to r.RemoteAddr for
+// local/dev use where the API is hit directly. This assumes the backend is never
+// reachable except through that proxy; if it were, a client could spoof the header to
+// dodge the limiter entirely.
 type IPRateLimiter struct {
 	mu       sync.Mutex
 	limiters map[string]*limiterEntry
@@ -92,6 +94,14 @@ func (l *IPRateLimiter) Guard(next http.HandlerFunc) http.HandlerFunc {
 }
 
 func clientIP(r *http.Request) string {
+	if fwd := r.Header.Get("X-Forwarded-For"); fwd != "" {
+		// Leftmost entry is the original client; proxies append their own address
+		// after it as the request is forwarded.
+		if ip := strings.TrimSpace(strings.Split(fwd, ",")[0]); ip != "" {
+			return ip
+		}
+	}
+
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/PurePras/shri-ram-service/backend/internal/config"
 	"github.com/PurePras/shri-ram-service/backend/internal/database"
@@ -21,7 +22,28 @@ import (
 	"github.com/PurePras/shri-ram-service/backend/internal/service"
 )
 
+// runHealthcheck is invoked as `api -healthcheck` — a Docker HEALTHCHECK exec's a new
+// process inside the *same* container, and the distroless runtime image has no shell or
+// curl for the usual `CMD curl -f ...`. Re-running this binary against the server it's
+// already running alongside (same localhost, same PORT) is the standard workaround.
+func runHealthcheck() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	resp, err := http.Get("http://localhost:" + port + "/health")
+	if err != nil || resp.StatusCode != http.StatusOK {
+		os.Exit(1)
+	}
+	resp.Body.Close()
+}
+
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "-healthcheck" {
+		runHealthcheck()
+		return
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		// Config (including LogFormat) isn't available yet, so this one line can't use slog.
@@ -36,6 +58,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// `api -migrate` applies migrations and exits — used by CI to prepare a database for
+	// the integration suite, and available as the same step in a real deploy pipeline
+	// that wants migrating separated from starting the server.
+	if len(os.Args) > 1 && os.Args[1] == "-migrate" {
+		return
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
@@ -48,12 +77,17 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler(pool))
+	// Not reverse-proxied by nginx (see nginx/conf.d/app.conf) — only reachable from
+	// other containers on the compose network, e.g. Prometheus. No auth of its own.
+	mux.Handle("/metrics", promhttp.Handler())
 	registerAPIRoutes(mux, pool, cfg)
 
 	// Built up innermost-first: the general rate limiter sits closest to the mux so a
 	// browser's automatic OPTIONS preflight (handled by withCORS) never consumes a token.
+	// Metrics wraps the mux directly so r.Pattern (set by the mux's own routing) is
+	// already populated by the time it reads it back out.
 	generalLimiter := middleware.NewIPRateLimiter(5, 20)
-	var root http.Handler = mux
+	var root http.Handler = middleware.Metrics(mux)
 	root = generalLimiter.Middleware(root)
 	root = withCORS(root, cfg.CORSAllowedOrigin)
 	root = middleware.SecurityHeaders(root)

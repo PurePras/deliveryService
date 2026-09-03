@@ -1,3 +1,6 @@
+// In dev this is a full origin (cross-origin to the backend, e.g. http://localhost:8080).
+// In production it's set to the relative prefix '/api', which nginx strips before
+// proxying to the backend — same-origin, so no CORS is involved at all in prod.
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8080';
 
 export class ApiError extends Error {
@@ -17,7 +20,11 @@ interface RequestOptions {
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
-  const url = new URL(path, API_URL);
+  // Plain concatenation, not `new URL(path, API_URL)`: a leading-slash path is an
+  // absolute-path reference that would discard API_URL's own path (e.g. '/api'),
+  // which breaks the production same-origin '/api' prefix case.
+  const base = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+  const url = new URL(base + path, window.location.origin);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       if (value !== undefined) {
