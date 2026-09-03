@@ -1,0 +1,9 @@
+# Applies to the frontend/nginx image build, whose context is the repo root (see
+# docker-compose.prod.yml) so it can also pull in ../nginx. The backend image builds
+# with backend/ as its own context and uses backend/.dockerignore instead.
+.git
+frontend/node_modules
+frontend/dist
+backend/tests
+docs
+*.md

@@ -1,0 +1,33 @@
+# Optional monitoring stack. Adds Prometheus (scrapes the backend's /metrics) and
+# Grafana (pre-provisioned with a Prometheus datasource and a starter dashboard).
+# Neither is exposed publicly by default — reach Grafana via an SSH tunnel:
+#   ssh -L 3000:localhost:3000 <user>@<server>
+# then open http://localhost:3000 (default login admin/admin, change it on first login).
+#
+# Usage: docker compose -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  prometheus_data:
+  grafana_data:

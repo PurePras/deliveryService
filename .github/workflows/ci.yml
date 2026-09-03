@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: shri_ram
+          POSTGRES_PASSWORD: shri_ram
+          POSTGRES_DB: shri_ram_service
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U shri_ram -d shri_ram_service"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://shri_ram:shri_ram@localhost:5432/shri_ram_service?sslmode=disable
+      JWT_SECRET: ci-test-secret
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache-dependency-path: backend/go.sum
+
+      - run: go build ./...
+      - run: go vet ./...
+
+      - name: Apply migrations
+        run: go run ./cmd/api -migrate
+
+      - name: Unit tests
+        run: go test ./...
+
+      - name: Integration tests
+        run: go test -tags=integration ./tests/...
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npx oxlint
+      - run: npm run build
