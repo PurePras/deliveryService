@@ -31,3 +31,14 @@ export function formatQuantity(value: string): string {
   const amount = Number(value);
   return Number.isFinite(amount) ? quantityFormatter.format(amount) : value;
 }
+
+const dateFormatter = new Intl.DateTimeFormat('en-IN', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+});
+
+export function formatDate(value: string): string {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : dateFormatter.format(date);
+}

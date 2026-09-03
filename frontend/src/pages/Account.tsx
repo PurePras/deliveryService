@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/auth/AuthContext';
 import styles from './Account.module.css';
 
@@ -34,6 +34,10 @@ function Account() {
           <span className={styles.roleBadge}>{user.role}</span>
         </div>
       </div>
+
+      <Link to="/orders" className={styles.ordersLink}>
+        View your orders →
+      </Link>
 
       <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
         Log Out

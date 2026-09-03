@@ -28,3 +28,12 @@ export function logout() {
 export function getMe() {
   return apiRequest<User>('/auth/me');
 }
+
+export interface ChangePasswordInput {
+  current_password: string;
+  new_password: string;
+}
+
+export function changePassword(input: ChangePasswordInput) {
+  return apiRequest<{ status: string }>('/auth/password', { method: 'PUT', body: input });
+}

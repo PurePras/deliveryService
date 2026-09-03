@@ -1,0 +1,132 @@
+.shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.sidebar {
+  width: 220px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  padding: 24px 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 20px;
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text-h);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.navLink {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.navLink:hover {
+  background: var(--code-bg);
+  color: var(--text-h);
+}
+
+.navLinkActive {
+  background: var(--accent-bg);
+  color: var(--accent-h);
+  font-weight: 700;
+}
+
+.footer {
+  padding: 16px 20px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.adminName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.backLink {
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--accent-h);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: 32px;
+  overflow-x: auto;
+}
+
+@media (max-width: 720px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 12px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  .brand {
+    padding: 0;
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 0;
+    flex: 1;
+  }
+
+  .footer {
+    padding: 0;
+    border-top: none;
+    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .content {
+    padding: 20px 16px;
+  }
+}

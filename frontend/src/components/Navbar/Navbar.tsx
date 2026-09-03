@@ -47,12 +47,28 @@ function Navbar() {
             {user ? (
               <>
                 <NavLink
+                  to="/orders"
+                  className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
+                  onClick={() => setIsOpen(false)}
+                >
+                  Orders
+                </NavLink>
+                <NavLink
                   to="/account"
                   className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
                   onClick={() => setIsOpen(false)}
                 >
                   {user.name.split(' ')[0]}
                 </NavLink>
+                {user.role === 'admin' && (
+                  <NavLink
+                    to="/admin"
+                    className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Admin
+                  </NavLink>
+                )}
                 <button type="button" className={styles.link} onClick={handleLogout}>
                   Logout
                 </button>

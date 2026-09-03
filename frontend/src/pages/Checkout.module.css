@@ -1,0 +1,174 @@
+.page {
+  flex: 1;
+  padding: 40px 24px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  text-align: left;
+}
+
+.page h1 {
+  margin: 0;
+}
+
+.browseLink {
+  margin-top: 8px;
+  color: var(--accent-h);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.browseLink:hover {
+  text-decoration: underline;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.review {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.reviewItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reviewImage {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.reviewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.reviewQty {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.reviewSubtotal {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-h);
+  flex: none;
+}
+
+.reviewTotal {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--code-bg);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.field textarea,
+.field select,
+.field input {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 14px;
+  font-family: var(--sans);
+  font-weight: 400;
+  resize: vertical;
+}
+
+.field textarea:focus,
+.field select:focus,
+.field input:focus {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.submit {
+  margin-top: 8px;
+  padding: 13px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-h));
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px var(--accent-border);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px var(--accent-border);
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}

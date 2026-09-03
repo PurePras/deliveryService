@@ -46,6 +46,17 @@
   color: var(--accent-h);
 }
 
+.ordersLink {
+  color: var(--accent-h);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.ordersLink:hover {
+  text-decoration: underline;
+}
+
 .logoutBtn {
   padding: 10px 24px;
   border-radius: 999px;

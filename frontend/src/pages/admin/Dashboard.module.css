@@ -1,0 +1,103 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  text-align: left;
+}
+
+.page h1 {
+  margin: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    border-color 0.2s;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--accent-border);
+}
+
+.statIcon {
+  font-size: 24px;
+}
+
+.statValue {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-h);
+  font-family: var(--heading);
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.recent {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 20px 24px;
+}
+
+.recent h2 {
+  margin: 0 0 16px;
+}
+
+.empty {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.recentList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.recentItem {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text-h);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.recentList li:last-child .recentItem {
+  border-bottom: none;
+}
+
+.recentStatus {
+  text-transform: capitalize;
+  color: var(--text);
+  font-weight: 400;
+}

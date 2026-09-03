@@ -7,7 +7,6 @@ export interface CreateOrderItemInput {
 }
 
 export interface CreateOrderInput {
-  user_id: string;
   delivery_area_id: string;
   delivery_slot_id: string;
   delivery_date: string;
@@ -23,7 +22,7 @@ export function getOrder(id: string) {
   return apiRequest<OrderWithItems>(`/orders/${id}`);
 }
 
-export function listOrders(params?: { user_id?: string; limit?: number; offset?: number }) {
+export function listOrders(params?: { status?: OrderStatus; limit?: number; offset?: number }) {
   return apiRequest<Order[]>('/orders', { query: params });
 }
 
