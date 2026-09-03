@@ -33,7 +33,12 @@ func NewOrderService(repo *repository.OrderRepository) *OrderService {
 	return &OrderService{repo: repo}
 }
 
-func (s *OrderService) Create(ctx context.Context, in dto.CreateOrderRequest) (*dto.OrderResponse, error) {
+// Create places an order for userID, which must come from the authenticated
+// session (see middleware.UserFromContext) — never from client-supplied input.
+func (s *OrderService) Create(ctx context.Context, userID string, in dto.CreateOrderRequest) (*dto.OrderResponse, error) {
+	if err := requireUUID("user_id", userID); err != nil {
+		return nil, err
+	}
 	deliveryDate, err := validateCreateOrderRequest(in)
 	if err != nil {
 		return nil, err
@@ -45,7 +50,7 @@ func (s *OrderService) Create(ctx context.Context, in dto.CreateOrderRequest) (*
 	}
 
 	order, orderItems, err := s.repo.Create(ctx, &model.Order{
-		UserID:          in.UserID,
+		UserID:          userID,
 		DeliveryAreaID:  in.DeliveryAreaID,
 		DeliverySlotID:  in.DeliverySlotID,
 		DeliveryDate:    deliveryDate,
@@ -58,7 +63,10 @@ func (s *OrderService) Create(ctx context.Context, in dto.CreateOrderRequest) (*
 	return &dto.OrderResponse{Order: *order, Items: orderItems}, nil
 }
 
-func (s *OrderService) Get(ctx context.Context, id string) (*dto.OrderResponse, error) {
+// Get returns the order only if requesterID owns it or isAdmin is true; otherwise it
+// returns apperror.ErrNotFound (never a 403) so a non-owned id can't be distinguished
+// from one that simply doesn't exist.
+func (s *OrderService) Get(ctx context.Context, id, requesterID string, isAdmin bool) (*dto.OrderResponse, error) {
 	if err := requireUUID("id", id); err != nil {
 		return nil, err
 	}
@@ -66,16 +74,29 @@ func (s *OrderService) Get(ctx context.Context, id string) (*dto.OrderResponse, 
 	if err != nil {
 		return nil, err
 	}
+	if order.UserID != requesterID && !isAdmin {
+		return nil, apperror.ErrNotFound
+	}
 	return &dto.OrderResponse{Order: *order, Items: items}, nil
 }
 
-func (s *OrderService) List(ctx context.Context, userID *string, limit, offset int) ([]model.Order, error) {
-	if userID != nil {
-		if err := requireUUID("user_id", *userID); err != nil {
-			return nil, err
-		}
+type OrderListParams struct {
+	Status *string
+	Limit  int
+	Offset int
+}
+
+// List returns requesterID's own orders, unless isAdmin — in which case it returns every
+// customer's orders (optionally filtered by status), since fulfillment needs to see all of them.
+func (s *OrderService) List(ctx context.Context, requesterID string, isAdmin bool, params OrderListParams) ([]model.Order, error) {
+	if err := requireUUID("user_id", requesterID); err != nil {
+		return nil, err
 	}
-	return s.repo.List(ctx, userID, limit, offset)
+	filter := repository.OrderFilter{Status: params.Status}
+	if !isAdmin {
+		filter.UserID = &requesterID
+	}
+	return s.repo.List(ctx, filter, params.Limit, params.Offset)
 }
 
 func (s *OrderService) UpdateStatus(ctx context.Context, id string, in dto.UpdateOrderStatusRequest) (*model.Order, error) {
@@ -99,7 +120,6 @@ func (s *OrderService) UpdateStatus(ctx context.Context, id string, in dto.Updat
 
 func validateCreateOrderRequest(in dto.CreateOrderRequest) (time.Time, error) {
 	errs := []error{
-		requireUUID("user_id", in.UserID),
 		requireUUID("delivery_area_id", in.DeliveryAreaID),
 		requireUUID("delivery_slot_id", in.DeliverySlotID),
 		requireNonEmpty("delivery_address", in.DeliveryAddress),
@@ -108,6 +128,10 @@ func validateCreateOrderRequest(in dto.CreateOrderRequest) (time.Time, error) {
 	deliveryDate, dateErr := time.Parse("2006-01-02", in.DeliveryDate)
 	if dateErr != nil {
 		errs = append(errs, fmt.Errorf("%w: delivery_date must be in YYYY-MM-DD format", apperror.ErrValidation))
+	} else if today := time.Now().UTC(); deliveryDate.Before(time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, time.UTC)) {
+		// time.Parse of a bare "YYYY-MM-DD" layout yields a UTC-midnight time.Time,
+		// so "today" must be computed in UTC too to avoid a timezone-boundary off-by-one.
+		errs = append(errs, fmt.Errorf("%w: delivery_date cannot be in the past", apperror.ErrValidation))
 	}
 
 	if len(in.Items) == 0 {

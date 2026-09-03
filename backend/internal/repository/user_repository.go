@@ -62,3 +62,14 @@ func (r *UserRepository) GetByPhone(ctx context.Context, phone string) (*model.U
 	row := r.pool.QueryRow(ctx, `SELECT `+userColumns+` FROM users WHERE phone = $1`, phone)
 	return scanUser(row)
 }
+
+func (r *UserRepository) UpdatePasswordHash(ctx context.Context, userID, passwordHash string) error {
+	tag, err := r.pool.Exec(ctx, `UPDATE users SET password_hash = $1 WHERE id = $2`, passwordHash, userID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return apperror.ErrNotFound
+	}
+	return nil
+}

@@ -19,11 +19,14 @@ func NewAuthHandler(svc *service.AuthService, jwtSecret string, cookieSecure boo
 	return &AuthHandler{svc: svc, jwtSecret: jwtSecret, cookieSecure: cookieSecure}
 }
 
-func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /auth/register", h.Register)
-	mux.HandleFunc("POST /auth/login", h.Login)
+// authLimiter is a stricter, auth-specific rate limit (see middleware.IPRateLimiter.Guard) —
+// applied outermost on the sensitive routes, before the cost of checking auth/hitting the DB.
+func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux, authLimiter RouteGuard) {
+	mux.HandleFunc("POST /auth/register", authLimiter(h.Register))
+	mux.HandleFunc("POST /auth/login", authLimiter(h.Login))
 	mux.HandleFunc("POST /auth/logout", h.Logout)
 	mux.HandleFunc("GET /auth/me", middleware.RequireAuth(h.jwtSecret)(h.Me))
+	mux.HandleFunc("PUT /auth/password", authLimiter(middleware.RequireAuth(h.jwtSecret)(h.ChangePassword)))
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +84,25 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, user)
+}
+
+func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	authUser, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "authentication required")
+		return
+	}
+
+	var in dto.ChangePasswordRequest
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := h.svc.ChangePassword(r.Context(), authUser.ID, in); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, token string) {

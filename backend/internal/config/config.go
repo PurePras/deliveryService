@@ -11,6 +11,7 @@ type Config struct {
 	JWTSecret         string
 	CookieSecure      bool
 	CORSAllowedOrigin string
+	LogFormat         string // "text" (default, local dev) or "json" (log aggregators)
 }
 
 func Load() (*Config, error) {
@@ -34,11 +35,17 @@ func Load() (*Config, error) {
 		corsAllowedOrigin = "http://localhost:5173"
 	}
 
+	logFormat := os.Getenv("LOG_FORMAT")
+	if logFormat == "" {
+		logFormat = "text"
+	}
+
 	return &Config{
 		DatabaseURL:       databaseURL,
 		ServerPort:        port,
 		JWTSecret:         jwtSecret,
 		CookieSecure:      os.Getenv("COOKIE_SECURE") == "true",
 		CORSAllowedOrigin: corsAllowedOrigin,
+		LogFormat:         logFormat,
 	}, nil
 }

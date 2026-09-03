@@ -163,12 +163,31 @@ func (r *OrderRepository) itemsByOrderID(ctx context.Context, orderID string) ([
 	return items, rows.Err()
 }
 
-func (r *OrderRepository) List(ctx context.Context, userID *string, limit, offset int) ([]model.Order, error) {
+// OrderFilter's UserID is nil only for an admin listing every customer's orders —
+// the service layer is responsible for only ever passing nil when the requester is admin.
+type OrderFilter struct {
+	UserID *string
+	Status *string
+}
+
+func (r *OrderRepository) List(ctx context.Context, filter OrderFilter, limit, offset int) ([]model.Order, error) {
 	query := `SELECT ` + orderColumns + ` FROM orders`
+	var conditions []string
 	var args []any
-	if userID != nil {
-		args = append(args, *userID)
-		query += fmt.Sprintf(" WHERE user_id = $%d", len(args))
+	if filter.UserID != nil {
+		args = append(args, *filter.UserID)
+		conditions = append(conditions, fmt.Sprintf("user_id = $%d", len(args)))
+	}
+	if filter.Status != nil {
+		args = append(args, *filter.Status)
+		conditions = append(conditions, fmt.Sprintf("status = $%d", len(args)))
+	}
+	for i, cond := range conditions {
+		if i == 0 {
+			query += " WHERE " + cond
+		} else {
+			query += " AND " + cond
+		}
 	}
 	args = append(args, limit, offset)
 	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", len(args)-1, len(args))

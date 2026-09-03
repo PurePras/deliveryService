@@ -8,7 +8,6 @@ type CreateOrderItemRequest struct {
 }
 
 type CreateOrderRequest struct {
-	UserID          string                   `json:"user_id"`
 	DeliveryAreaID  string                   `json:"delivery_area_id"`
 	DeliverySlotID  string                   `json:"delivery_slot_id"`
 	DeliveryDate    string                   `json:"delivery_date"` // "YYYY-MM-DD"

@@ -24,11 +24,15 @@ func NewAuthService(repo *repository.UserRepository, jwtSecret string) *AuthServ
 }
 
 func (s *AuthService) Register(ctx context.Context, in dto.RegisterRequest) (*model.User, string, error) {
-	if err := errors.Join(
+	errs := []error{
 		requireNonEmpty("name", in.Name),
-		requireNonEmpty("phone", in.Phone),
+		requirePhone("phone", in.Phone),
 		requireMinLength("password", in.Password, 8),
-	); err != nil {
+	}
+	if in.Email != nil && *in.Email != "" {
+		errs = append(errs, requireEmail("email", *in.Email))
+	}
+	if err := errors.Join(errs...); err != nil {
 		return nil, "", err
 	}
 
@@ -94,4 +98,34 @@ func (s *AuthService) Login(ctx context.Context, in dto.LoginRequest) (*model.Us
 
 func (s *AuthService) Me(ctx context.Context, userID string) (*model.User, error) {
 	return s.repo.GetByID(ctx, userID)
+}
+
+// ChangePassword re-verifies currentPassword the same way Login does before saving newPassword,
+// so a stolen/left-open session alone isn't enough to take over the password.
+func (s *AuthService) ChangePassword(ctx context.Context, userID string, in dto.ChangePasswordRequest) error {
+	if err := errors.Join(
+		requireNonEmpty("current_password", in.CurrentPassword),
+		requireMinLength("new_password", in.NewPassword, 8),
+	); err != nil {
+		return err
+	}
+
+	user, err := s.repo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if user.PasswordHash == nil {
+		return fmt.Errorf("%w: current password is incorrect", apperror.ErrUnauthorized)
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(in.CurrentPassword)); err != nil {
+		return fmt.Errorf("%w: current password is incorrect", apperror.ErrUnauthorized)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(in.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.UpdatePasswordHash(ctx, userID, string(hash))
 }

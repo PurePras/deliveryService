@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/PurePras/shri-ram-service/backend/internal/apperror"
@@ -37,12 +38,21 @@ func handleServiceError(w http.ResponseWriter, err error) {
 	case errors.Is(err, apperror.ErrForbidden):
 		writeError(w, http.StatusForbidden, err.Error())
 	default:
+		// Unrecognized error: the client only ever gets the generic message (no internal
+		// detail leaked), but the real cause needs to be visible to us somewhere, or a
+		// production bug would be completely invisible.
+		slog.Error("unhandled service error", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal server error")
 	}
 }
 
+// maxRequestBodyBytes caps how much of a request body decodeJSON will read,
+// so an oversized payload can't be used to exhaust server memory.
+const maxRequestBodyBytes = 1 << 20 // 1MB
+
 func decodeJSON(r *http.Request, v any) error {
 	defer r.Body.Close()
+	r.Body = http.MaxBytesReader(nil, r.Body, maxRequestBodyBytes)
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	return dec.Decode(v)

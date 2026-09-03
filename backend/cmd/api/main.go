@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -23,11 +24,16 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("load config: %v", err)
+		// Config (including LogFormat) isn't available yet, so this one line can't use slog.
+		panic("load config: " + err.Error())
 	}
 
+	logger := newLogger(cfg.LogFormat)
+	slog.SetDefault(logger)
+
 	if err := database.RunMigrations(cfg.DatabaseURL); err != nil {
-		log.Fatalf("run migrations: %v", err)
+		logger.Error("run migrations", "error", err)
+		os.Exit(1)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -35,7 +41,8 @@ func main() {
 
 	pool, err := database.NewPool(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("connect to database: %v", err)
+		logger.Error("connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
@@ -43,9 +50,23 @@ func main() {
 	mux.HandleFunc("/health", healthHandler(pool))
 	registerAPIRoutes(mux, pool, cfg)
 
+	// Built up innermost-first: the general rate limiter sits closest to the mux so a
+	// browser's automatic OPTIONS preflight (handled by withCORS) never consumes a token.
+	generalLimiter := middleware.NewIPRateLimiter(5, 20)
+	var root http.Handler = mux
+	root = generalLimiter.Middleware(root)
+	root = withCORS(root, cfg.CORSAllowedOrigin)
+	root = middleware.SecurityHeaders(root)
+	root = middleware.RequestLogger(logger)(root)
+	root = middleware.Recover(logger)(root)
+
 	server := &http.Server{
-		Addr:    ":" + cfg.ServerPort,
-		Handler: withCORS(mux, cfg.CORSAllowedOrigin),
+		Addr:              ":" + cfg.ServerPort,
+		Handler:           root,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {
@@ -55,11 +76,20 @@ func main() {
 		server.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("Shri Ram API running on http://localhost:%s", cfg.ServerPort)
+	logger.Info("Shri Ram API running", "port", cfg.ServerPort)
 
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		logger.Error("server stopped", "error", err)
+		os.Exit(1)
 	}
+}
+
+func newLogger(format string) *slog.Logger {
+	opts := &slog.HandlerOptions{Level: slog.LevelInfo}
+	if format == "json" {
+		return slog.New(slog.NewJSONHandler(os.Stdout, opts))
+	}
+	return slog.New(slog.NewTextHandler(os.Stdout, opts))
 }
 
 func registerAPIRoutes(mux *http.ServeMux, pool *pgxpool.Pool, cfg *config.Config) {
@@ -73,15 +103,19 @@ func registerAPIRoutes(mux *http.ServeMux, pool *pgxpool.Pool, cfg *config.Confi
 	orderHandler := handler.NewOrderHandler(service.NewOrderService(repository.NewOrderRepository(pool)))
 	authHandler := handler.NewAuthHandler(service.NewAuthService(userRepo, cfg.JWTSecret), cfg.JWTSecret, cfg.CookieSecure)
 
+	requireAuth := middleware.RequireAuth(cfg.JWTSecret)
 	requireAdmin := middleware.RequireRole(cfg.JWTSecret, model.RoleAdmin)
+	// Stricter than the general per-IP limit — login/register/password-change are the
+	// actual brute-force/credential-stuffing targets, not the API as a whole.
+	authLimiter := middleware.NewIPRateLimiter(1, 5)
 
 	categoryHandler.RegisterRoutes(mux, requireAdmin)
 	productHandler.RegisterRoutes(mux, requireAdmin)
 	deliveryAreaHandler.RegisterRoutes(mux, requireAdmin)
 	deliverySlotHandler.RegisterRoutes(mux, requireAdmin)
 	userHandler.RegisterRoutes(mux)
-	orderHandler.RegisterRoutes(mux, requireAdmin)
-	authHandler.RegisterRoutes(mux)
+	orderHandler.RegisterRoutes(mux, requireAuth, requireAdmin)
+	authHandler.RegisterRoutes(mux, authLimiter.Guard)
 }
 
 func withCORS(next http.Handler, allowedOrigin string) http.Handler {
