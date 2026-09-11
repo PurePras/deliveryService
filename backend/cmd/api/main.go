@@ -20,6 +20,7 @@ import (
 	"github.com/PurePras/shri-ram-service/backend/internal/model"
 	"github.com/PurePras/shri-ram-service/backend/internal/repository"
 	"github.com/PurePras/shri-ram-service/backend/internal/service"
+	"github.com/PurePras/shri-ram-service/backend/internal/sms"
 )
 
 // runHealthcheck is invoked as `api -healthcheck` — a Docker HEALTHCHECK exec's a new
@@ -135,7 +136,13 @@ func registerAPIRoutes(mux *http.ServeMux, pool *pgxpool.Pool, cfg *config.Confi
 	deliverySlotHandler := handler.NewDeliverySlotHandler(service.NewDeliverySlotService(repository.NewDeliverySlotRepository(pool)))
 	userHandler := handler.NewUserHandler(service.NewUserService(userRepo))
 	orderHandler := handler.NewOrderHandler(service.NewOrderService(repository.NewOrderRepository(pool)))
-	authHandler := handler.NewAuthHandler(service.NewAuthService(userRepo, cfg.JWTSecret), cfg.JWTSecret, cfg.CookieSecure)
+
+	var smsSender sms.Sender = sms.Unconfigured{}
+	if cfg.OTPDevLogCodes {
+		smsSender = sms.NewConsoleSender(slog.Default())
+	}
+	authSvc := service.NewAuthService(userRepo, repository.NewOTPRepository(pool), smsSender, cfg.JWTSecret, cfg.OTPTTL)
+	authHandler := handler.NewAuthHandler(authSvc, cfg.JWTSecret, cfg.CookieSecure)
 
 	requireAuth := middleware.RequireAuth(cfg.JWTSecret)
 	requireAdmin := middleware.RequireRole(cfg.JWTSecret, model.RoleAdmin)

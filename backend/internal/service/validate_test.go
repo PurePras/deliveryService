@@ -147,6 +147,27 @@ func TestRequireEmail(t *testing.T) {
 	}
 }
 
+func TestRequireOTPCode(t *testing.T) {
+	tests := []struct {
+		name    string
+		value   string
+		wantErr bool
+	}{
+		{"valid 6 digits", "123456", false},
+		{"valid with leading zero", "012345", false},
+		{"too short", "12345", true},
+		{"too long", "1234567", true},
+		{"contains letters", "12345a", true},
+		{"empty", "", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := requireOTPCode("code", tt.value)
+			assertValidationErr(t, err, tt.wantErr)
+		})
+	}
+}
+
 // assertValidationErr checks that err is nil when wantErr is false, and that it wraps
 // apperror.ErrValidation when wantErr is true — every validator in this package must
 // use that sentinel so handleServiceError can map it to a 400.

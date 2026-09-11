@@ -27,6 +27,10 @@ func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux, authLimiter RouteGuard)
 	mux.HandleFunc("POST /auth/logout", h.Logout)
 	mux.HandleFunc("GET /auth/me", middleware.RequireAuth(h.jwtSecret)(h.Me))
 	mux.HandleFunc("PUT /auth/password", authLimiter(middleware.RequireAuth(h.jwtSecret)(h.ChangePassword)))
+	// The frontend's login page uses these now instead of POST /auth/login — that
+	// route stays mounted for API back-compat (see AuthService.Login's callers).
+	mux.HandleFunc("POST /auth/otp/request", authLimiter(h.RequestOTP))
+	mux.HandleFunc("POST /auth/otp/verify", authLimiter(h.VerifyOTP))
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +107,34 @@ func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *AuthHandler) RequestOTP(w http.ResponseWriter, r *http.Request) {
+	var in dto.RequestOTPRequest
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := h.svc.RequestLoginOTP(r.Context(), in.Phone); err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "sent"})
+}
+
+func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var in dto.VerifyOTPRequest
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	user, token, err := h.svc.VerifyLoginOTP(r.Context(), in.Phone, in.Code)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	h.setSessionCookie(w, token)
+	writeJSON(w, http.StatusOK, user)
 }
 
 func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, token string) {

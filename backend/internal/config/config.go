@@ -3,6 +3,8 @@ package config
 import (
 	"errors"
 	"os"
+	"strconv"
+	"time"
 )
 
 type Config struct {
@@ -12,6 +14,11 @@ type Config struct {
 	CookieSecure      bool
 	CORSAllowedOrigin string
 	LogFormat         string // "text" (default, local dev) or "json" (log aggregators)
+	OTPTTL            time.Duration
+	// OTPDevLogCodes prints generated OTP codes to the server log so login is
+	// testable without a real SMS provider — never set this in production (see
+	// internal/sms.ConsoleSender).
+	OTPDevLogCodes bool
 }
 
 func Load() (*Config, error) {
@@ -40,6 +47,15 @@ func Load() (*Config, error) {
 		logFormat = "text"
 	}
 
+	otpTTL := 5 * time.Minute
+	if raw := os.Getenv("OTP_TTL_MINUTES"); raw != "" {
+		minutes, err := strconv.Atoi(raw)
+		if err != nil || minutes <= 0 {
+			return nil, errors.New("OTP_TTL_MINUTES must be a positive integer")
+		}
+		otpTTL = time.Duration(minutes) * time.Minute
+	}
+
 	return &Config{
 		DatabaseURL:       databaseURL,
 		ServerPort:        port,
@@ -47,5 +63,7 @@ func Load() (*Config, error) {
 		CookieSecure:      os.Getenv("COOKIE_SECURE") == "true",
 		CORSAllowedOrigin: corsAllowedOrigin,
 		LogFormat:         logFormat,
+		OTPTTL:            otpTTL,
+		OTPDevLogCodes:    os.Getenv("OTP_DEV_LOG_CODES") == "true",
 	}, nil
 }

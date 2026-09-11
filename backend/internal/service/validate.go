@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	phonePattern = regexp.MustCompile(`^[6-9]\d{9}$`)
-	emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+	phonePattern   = regexp.MustCompile(`^[6-9]\d{9}$`)
+	emailPattern   = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+	otpCodePattern = regexp.MustCompile(`^\d{6}$`)
 )
 
 func requireUUID(field, value string) error {
@@ -66,6 +67,13 @@ func requirePhone(field, value string) error {
 func requireEmail(field, value string) error {
 	if !emailPattern.MatchString(value) {
 		return fmt.Errorf("%w: %s must be a valid email address", apperror.ErrValidation, field)
+	}
+	return nil
+}
+
+func requireOTPCode(field, value string) error {
+	if !otpCodePattern.MatchString(value) {
+		return fmt.Errorf("%w: %s must be a 6-digit code", apperror.ErrValidation, field)
 	}
 	return nil
 }

@@ -115,3 +115,37 @@
 .switch a:hover {
   text-decoration: underline;
 }
+
+.otpActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent-h);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.linkButton:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.linkButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+  text-decoration: none;
+}

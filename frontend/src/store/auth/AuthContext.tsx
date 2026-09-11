@@ -2,17 +2,18 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '../../types';
 import {
   getMe,
-  login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
-  type LoginInput,
+  requestLoginOtp,
+  verifyLoginOtp,
   type RegisterInput,
 } from '../../api/auth';
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (input: LoginInput) => Promise<void>;
+  requestOtp: (phone: string) => Promise<void>;
+  verifyOtp: (phone: string, code: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -44,8 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  async function login(input: LoginInput) {
-    setUser(await apiLogin(input));
+  async function requestOtp(phone: string) {
+    await requestLoginOtp({ phone });
+  }
+
+  async function verifyOtp(phone: string, code: string) {
+    setUser(await verifyLoginOtp({ phone, code }));
   }
 
   async function register(input: RegisterInput) {
@@ -57,7 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  return <AuthContext.Provider value={{ user, loading, login, register, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, requestOtp, verifyOtp, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

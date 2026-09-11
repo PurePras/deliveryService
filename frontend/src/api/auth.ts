@@ -8,17 +8,25 @@ export interface RegisterInput {
   email?: string;
 }
 
-export interface LoginInput {
+export interface RequestOtpInput {
   phone: string;
-  password: string;
+}
+
+export interface VerifyOtpInput {
+  phone: string;
+  code: string;
 }
 
 export function register(input: RegisterInput) {
   return apiRequest<User>('/auth/register', { method: 'POST', body: input });
 }
 
-export function login(input: LoginInput) {
-  return apiRequest<User>('/auth/login', { method: 'POST', body: input });
+export function requestLoginOtp(input: RequestOtpInput) {
+  return apiRequest<{ status: string }>('/auth/otp/request', { method: 'POST', body: input });
+}
+
+export function verifyLoginOtp(input: VerifyOtpInput) {
+  return apiRequest<User>('/auth/otp/verify', { method: 'POST', body: input });
 }
 
 export function logout() {

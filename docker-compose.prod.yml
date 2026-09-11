@@ -28,6 +28,8 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE}
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN}
       LOG_FORMAT: ${LOG_FORMAT}
+      OTP_TTL_MINUTES: ${OTP_TTL_MINUTES}
+      OTP_DEV_LOG_CODES: ${OTP_DEV_LOG_CODES}
     depends_on:
       db:
         condition: service_healthy
