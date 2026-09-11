@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -88,7 +89,7 @@ func main() {
 	// Metrics wraps the mux directly so r.Pattern (set by the mux's own routing) is
 	// already populated by the time it reads it back out.
 	generalLimiter := middleware.NewIPRateLimiter(5, 20)
-	var root http.Handler = middleware.Metrics(mux)
+	var root http.Handler = middleware.Metrics(stripAPIPrefix(mux))
 	root = generalLimiter.Middleware(root)
 	root = withCORS(root, cfg.CORSAllowedOrigin)
 	root = middleware.SecurityHeaders(root)
@@ -157,6 +158,24 @@ func registerAPIRoutes(mux *http.ServeMux, pool *pgxpool.Pool, cfg *config.Confi
 	userHandler.RegisterRoutes(mux)
 	orderHandler.RegisterRoutes(mux, requireAuth, requireAdmin)
 	authHandler.RegisterRoutes(mux, authLimiter.Guard)
+}
+
+// stripAPIPrefix makes every route also reachable under a "/api" prefix, alongside
+// its normal root-level path. nginx (see nginx/conf.d/app.conf) already strips that
+// prefix itself before forwarding, but Render's Static Site rewrite-to-external-host
+// forwards the original incoming path unchanged instead of substituting the
+// destination's path segment — so the backend accommodates whichever is actually in
+// front of it rather than depending on one specific proxy's rewrite behavior.
+func stripAPIPrefix(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/api":
+			r.URL.Path = "/"
+		case strings.HasPrefix(r.URL.Path, "/api/"):
+			r.URL.Path = strings.TrimPrefix(r.URL.Path, "/api")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func withCORS(next http.Handler, allowedOrigin string) http.Handler {
