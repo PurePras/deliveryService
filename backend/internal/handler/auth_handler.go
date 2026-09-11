@@ -69,7 +69,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: h.cookieSameSite(),
 		Secure:   h.cookieSecure,
 		MaxAge:   -1,
 	})
@@ -143,8 +143,20 @@ func (h *AuthHandler) setSessionCookie(w http.ResponseWriter, token string) {
 		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: h.cookieSameSite(),
 		Secure:   h.cookieSecure,
 		MaxAge:   int(auth.TTL.Seconds()),
 	})
+}
+
+// cookieSameSite is None (cross-site, e.g. a frontend and backend deployed as two
+// separate origins — see docs on Render deploys) when the cookie is Secure, since
+// browsers reject SameSite=None without Secure anyway; otherwise Lax, which is what
+// plain http local dev needs. None also works fine for same-origin deployments (the
+// nginx-fronted docker-compose.prod.yml path), so this one rule covers both shapes.
+func (h *AuthHandler) cookieSameSite() http.SameSite {
+	if h.cookieSecure {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
 }
