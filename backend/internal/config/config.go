@@ -19,6 +19,10 @@ type Config struct {
 	// testable without a real SMS provider — never set this in production (see
 	// internal/sms.ConsoleSender).
 	OTPDevLogCodes bool
+	// MSG91AuthKey/MSG91TemplateID configure the real SMS sender (internal/sms.MSG91Sender).
+	// Takes priority over OTPDevLogCodes when both happen to be set.
+	MSG91AuthKey    string
+	MSG91TemplateID string
 }
 
 func Load() (*Config, error) {
@@ -65,5 +69,7 @@ func Load() (*Config, error) {
 		LogFormat:         logFormat,
 		OTPTTL:            otpTTL,
 		OTPDevLogCodes:    os.Getenv("OTP_DEV_LOG_CODES") == "true",
+		MSG91AuthKey:      os.Getenv("MSG91_AUTH_KEY"),
+		MSG91TemplateID:   os.Getenv("MSG91_TEMPLATE_ID"),
 	}, nil
 }

@@ -30,6 +30,8 @@ services:
       LOG_FORMAT: ${LOG_FORMAT}
       OTP_TTL_MINUTES: ${OTP_TTL_MINUTES}
       OTP_DEV_LOG_CODES: ${OTP_DEV_LOG_CODES}
+      MSG91_AUTH_KEY: ${MSG91_AUTH_KEY}
+      MSG91_TEMPLATE_ID: ${MSG91_TEMPLATE_ID}
     depends_on:
       db:
         condition: service_healthy

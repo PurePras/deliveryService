@@ -139,7 +139,10 @@ func registerAPIRoutes(mux *http.ServeMux, pool *pgxpool.Pool, cfg *config.Confi
 	orderHandler := handler.NewOrderHandler(service.NewOrderService(repository.NewOrderRepository(pool)))
 
 	var smsSender sms.Sender = sms.Unconfigured{}
-	if cfg.OTPDevLogCodes {
+	switch {
+	case cfg.MSG91AuthKey != "" && cfg.MSG91TemplateID != "":
+		smsSender = sms.NewMSG91Sender(cfg.MSG91AuthKey, cfg.MSG91TemplateID)
+	case cfg.OTPDevLogCodes:
 		smsSender = sms.NewConsoleSender(slog.Default())
 	}
 	authSvc := service.NewAuthService(userRepo, repository.NewOTPRepository(pool), smsSender, cfg.JWTSecret, cfg.OTPTTL)
